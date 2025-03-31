@@ -210,10 +210,7 @@ router.route('/reviews')
       });
     }
     try{
-      const movie = await Movie.findById(movieId);
-       if(!movie){
-        return res.status(404).jsonp({success: false, msg: 'Movie Not Found'});
-       }
+       const movie = await Movie.findById(movieId);
        const newReview = new Review({movieId, username, review, rating});
        await newReview.save();
 
@@ -226,7 +223,7 @@ router.route('/reviews')
        );
        res.status(201).json({success: true, msg: 'Review created!'});
     }catch(err){
-      res.status(500).json({success: false, msg: 'Failed to create review', error: err});
+      res.status(404).json({success: false, msg: 'Movie Not Found', error: err});
     }
   });
 
