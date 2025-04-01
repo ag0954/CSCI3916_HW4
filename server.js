@@ -25,33 +25,35 @@ const GA_TRACKING_ID = process.env.GA_KEY
 
 async function trackReview(category, action, label, value, movieName) {
   const options = {
-    method: 'GET',
-    url: 'https://www.google-analytics.com/collect',
+    method: 'POST',
+    url: 'https://www.google-analytics.com/mp/collect',
     qs: {
-      v: '1', // API Version
-      tid: GA_TRACKING_ID, // Tracking ID
-      cid: crypto.randomBytes(16).toString('hex'), // Random Client ID
-      t: 'event', // Hit type: Event
-      ec: category, // Event Category (e.g., movie genre)
-      ea: action, // Event Action (e.g., 'post/reviews')
-      el: label, // Event Label (e.g., 'API Request for Movie Review')
-      ev: value, // Event Value (numeric, e.g., 1)
-      cd1: movieName, // Custom Dimension 1: Movie Name
-      cm1: 1 // Custom Metric 1: Number of requests (increment by 1)
+      measurement_id: process.env.GA_KEY,
+      api_secret: process.env.GA_API_SECRET 
     },
-    headers: {
-      'Cache-Control': 'no-cache'
-    }
+    body: {
+      client_id: crypto.randomBytes(16).toString('hex'),
+      events: [{
+        name: 'movie_review', // Custom event name
+        params: {
+          event_category: category,
+          event_action: action,
+          event_label: label,
+          event_value: value,
+          movie_name: movieName 
+        }
+      }]
+    },
+    json: true // Send as JSON
   };
-
   try {
-    await rp(options);
+    const response = await rp(options);
+    console.log(`Analytics response for ${movieName}:`, response);
     console.log(`Analytics tracked for movie: ${movieName}`);
   } catch (err) {
-    console.error('Error sending analytics:', err);
+    console.error(`Error sending analytics for ${movieName}:`, err.message);
   }
 }
-
 
 router.post('/signup', async (req, res) => { // Use async/await
   if (!req.body.username || !req.body.password) {
@@ -79,7 +81,7 @@ router.post('/signup', async (req, res) => { // Use async/await
 });
 
 
-router.post('/signin', async (req, res) => { // Use async/await
+router.post('/signin', async (req, res) => { 
   try {
     const user = await User.findOne({ username: req.body.username }).select('name username password');
 
@@ -131,12 +133,12 @@ router.route('/movies')
       res.status(405).send({status: 405, message: 'HTTP method not supported'});
     });
 
-router.route('/movies/:title')
+router.route('/movies/:id')
   .get(authJwtController.isAuthenticated,async (req, res) => {
     try {
       if(req.query.reviews === 'true'){
         const movieWithReviews = await Movie.aggregate([
-          {$match:{title:req.params.title}},
+          {$match:{_id: new mongoose.Types.ObjectId(req.params.id)}},
           {
             $lookup:{
               from: "reviews",
@@ -152,7 +154,7 @@ router.route('/movies/:title')
         return res.json(movieWithReviews[0]);
       }else{
 
-        const movie = await Movie.findOne({title: req.params.title});
+        const movie = await Movie.findById(req.params.id);
         if(!movie) return res.status(404).json({success: false, msg:'Movie not found'})
         res.json(movie);
       }
@@ -162,8 +164,8 @@ router.route('/movies/:title')
   })
   .put(authJwtController.isAuthenticated,async (req, res) =>{
     try {
-      const updatedMovie = await Movie.findOneAndUpdate(
-          { title: req.params.title }, 
+      const updatedMovie = await Movie.findByIdAndUpdate(
+          req.params.id, 
           req.body, 
           { new: true }
       );
@@ -175,7 +177,7 @@ router.route('/movies/:title')
   })
   .delete(authJwtController.isAuthenticated,async (req, res) =>{
     try {
-      const deletedMovie = await Movie.findOneAndDelete({ title: req.params.title });
+      const deletedMovie = await Movie.findByIdAndDelete(req.params.id);
       if (!deletedMovie) return res.status(404).json({ success: false, msg: 'Movie not found.' });
       res.json({ success: true, msg: 'Movie deleted.' });
     }catch (error) {
