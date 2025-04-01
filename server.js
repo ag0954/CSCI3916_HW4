@@ -133,7 +133,7 @@ router.route('/movies')
       res.status(405).send({status: 405, message: 'HTTP method not supported'});
     });
 
-router.route('/movies/:id')
+router.route('/movies/:id?')
   .get(authJwtController.isAuthenticated,async (req, res) => {
     try {
       if(req.query.reviews === 'true'){
