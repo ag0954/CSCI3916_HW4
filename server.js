@@ -4,6 +4,7 @@ const passport = require('passport');
 const authJwtController = require('./auth_jwt'); // You're not using authController, consider removing it
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const User = require('./Users');
 const Movie = require('./Movies'); // You're not using Movie, consider removing it
 const Review = require('./Reviews')
