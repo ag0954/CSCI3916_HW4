@@ -100,7 +100,7 @@ router.route('/movies')
       res.status(405).send({status: 405, message: 'HTTP method not supported'});
     });
 
-//movies can be found, updated, and deleted by using their id. Changed from title from previous assignment
+//movies can be found, updated, and deleted by using their id
 router.route('/movies/:id')
   .get(authJwtController.isAuthenticated,async (req, res) => {
     try {
@@ -192,21 +192,6 @@ router.route('/reviews')
       res.status(404).json({success: false, msg: 'Movie Not Found', error: err});
     }
   });
-
-  router.route('/reviews/:id')
-  .delete(authJwtController.isAuthenticated, async(req, res)=>{
-    try{
-      const deletedReview = await Review.findByIdAndDelete(req.params.id);
-      if(!deletedReview){
-        return res.status(404).json({success: false, msg: 'Review not found'});
-      }
-      res.json({success: true, msg:'Review deleted'});
-    }catch(error){
-      console.error('Error deleting review:', error.message);
-      res.status(500).json({success: false, msg: 'Error deleting review', error: error.message});
-    }
-  });
-
 
 
 app.use('/', router);
