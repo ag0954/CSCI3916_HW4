@@ -177,10 +177,7 @@ router.route('/reviews')
     }
     //make sure that our rating must be a number between 0-5
     if(rating <0|| rating >5){
-      return res.status(400).json({
-        success: false,
-        msg: "Rating must be between 0 and 5."
-      });
+      return res.status(400).json({success: false, msg: "Rating must be between 0 and 5."});
     }
     try{
       //make a new review attaching all required fields
